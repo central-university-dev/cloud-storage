@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = 'cloud-storage'
-include('app')
+include('app', 'server', 'client')
