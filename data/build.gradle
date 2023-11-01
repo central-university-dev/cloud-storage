@@ -1,0 +1,8 @@
+plugins {
+    id 'cloud.storage.java-library-conventions'
+}
+
+dependencies {
+    implementation 'org.jetbrains:annotations:23.0.0'
+    implementation project(':util')
+}
