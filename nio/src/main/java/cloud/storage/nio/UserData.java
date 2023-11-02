@@ -1,7 +1,14 @@
-package cloud.storage.data;
+package cloud.storage.nio;
+
+import cloud.storage.data.Field;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Data type containing information about user authorization.
+ *
+ * @see SignInResponse
+ */
 public class UserData implements Field {
     private final String login, password;
 
@@ -19,13 +26,13 @@ public class UserData implements Field {
     }
 
     @Override
-    public int getLength() {
+    public int getByteLength() {
         return Integer.BYTES + login.getBytes().length + Integer.BYTES + password.getBytes().length;
     }
 
     @Override
     public byte[] getBytes() {
-        byte[] buf = new byte[getLength()];
+        byte[] buf = new byte[getByteLength()];
         ByteBuffer.wrap(buf)
                 .putInt(login.length()).put(login.getBytes())
                 .putInt(password.length()).put(password.getBytes());

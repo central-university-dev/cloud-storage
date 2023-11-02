@@ -2,29 +2,34 @@ package cloud.storage.data;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Primary data packet used for network communication.
+ *
+ * @see Payload
+ */
 public class Packet implements Field {
-    public final int length;
+    public final int payloadByteLength;
     public final Payload payload;
 
     public Packet(Payload payload) {
-        this(payload.getLength(), payload);
+        this(payload.getByteLength(), payload);
     }
 
-    private Packet(int length, Payload payload) {
-        this.length = length;
+    private Packet(int payloadByteLength, Payload payload) {
+        this.payloadByteLength = payloadByteLength;
         this.payload = payload;
     }
 
     @Override
-    public int getLength() {
-        return 4 + length;
+    public int getByteLength() {
+        return Integer.BYTES + payloadByteLength;
     }
 
     @Override
     public byte[] getBytes() {
-        byte[] bytes = new byte[getLength()];
+        byte[] bytes = new byte[getByteLength()];
         ByteBuffer.wrap(bytes)
-                .putInt(length)
+                .putInt(payloadByteLength)
                 .put(payload.getBytes());
         return bytes;
     }
@@ -32,7 +37,7 @@ public class Packet implements Field {
     @Override
     public String toString() {
         return "Packet{" +
-                "length=" + length +
+                "length=" + payloadByteLength +
                 ", payload=" + payload +
                 '}';
     }

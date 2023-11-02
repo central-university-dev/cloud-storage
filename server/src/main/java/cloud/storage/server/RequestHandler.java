@@ -9,7 +9,11 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.util.Map;
 
-public class RequestHandler extends SimpleChannelInboundHandler<Payload> {
+/**
+ * Main logic of server side application.
+ * Receives the client's requests, handles it and sends a response.
+ */
+class RequestHandler extends SimpleChannelInboundHandler<Payload> {
     private final Map<Cmd, ? extends PayloadHandler> REQUEST_HANDLER_INSTANCES;
 
     private final FileManager fileManager;

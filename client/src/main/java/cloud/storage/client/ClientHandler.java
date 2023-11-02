@@ -10,11 +10,23 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class ClientHandler extends ChannelInboundHandlerAdapter {
+/**
+ * Primary handler on client-side application.
+ * Responsible for user interaction: receiving commands and returning messages.
+ * @see CommandParser
+ * @see ChannelCommandHandler
+ * @see ChannelPayloadHandler
+ */
+class ClientHandler extends ChannelInboundHandlerAdapter {
     private ChannelHandlerContext ctx;
     private BufferedReader reader;
     private BufferedWriter writer;
-    private volatile String user;
+    private String user;
+
+    /**
+     * @param reader -- where to read user commands
+     * @param writer -- where to print messages to user
+     */
 
     ClientHandler(BufferedReader reader, BufferedWriter writer) {
         super();
@@ -33,6 +45,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         sendCommand();
     }
 
+    /**
+     * Gets user command from passed reader and sends it down the pipeline.
+     */
     private void sendCommand() {
         print("<" + (user == null ? "" : user) + ">:");
 
@@ -74,6 +89,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         println("\tShow this message");
     }
 
+    /**
+     * Responsible to continue working in case of failure of the previous command.
+     */
     private final ChannelFutureListener sendNextCommand = new ChannelFutureListener() {
         @Override
         public void operationComplete(ChannelFuture future) {
@@ -141,10 +159,18 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         print(System.lineSeparator());
     }
 
+    /**
+     * Remembers the user's login which was used to authorize on the server
+     *
+     * @param login - the user's login that used to authorize on the server
+     */
     protected void signIn(String login) {
         this.user = login;
     }
 
+    /**
+     * Forgets the user's login from server side.
+     */
     protected void signOut() {
         this.user = null;
     }

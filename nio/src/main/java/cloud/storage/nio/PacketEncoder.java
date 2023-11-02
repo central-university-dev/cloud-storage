@@ -5,6 +5,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 
+/**
+ * Default {@link MessageToByteEncoder} to encode outbound packets in bytes
+ */
 public class PacketEncoder extends MessageToByteEncoder<Packet> {
 
     @Override

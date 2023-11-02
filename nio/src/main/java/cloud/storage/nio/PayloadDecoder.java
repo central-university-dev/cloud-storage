@@ -8,6 +8,9 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 
 import java.util.List;
 
+/**
+ * Default {@link MessageToMessageDecoder} to decode Packet from inbound {@link ByteBuf}
+ */
 public class PayloadDecoder extends MessageToMessageDecoder<ByteBuf> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) {

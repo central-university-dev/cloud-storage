@@ -17,14 +17,27 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Server side of application.
+ * Handles user requests and manages the inner file system.
+ */
 public class Server {
     private final int port;
 
+    /**
+     * Initiates a server.
+     *
+     * @param port port to connect server to.
+     */
     public Server(int port) {
         this.port = port;
     }
 
-    public void run() throws InterruptedException {
+    /**
+     * Runs the server.
+     * This method does not return immediately but when the server shut down.
+     */
+    public void run() {
         FileManager fileManager = new FileManager();
 
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -52,13 +65,21 @@ public class Server {
             ChannelFuture f = b.bind(port).sync(); // (7)
 
             f.channel().closeFuture().sync();
+        } catch (InterruptedException e) {
+            System.err.println("Server's thread was interrupted: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    /**
+     * Another way to run the server.
+     *
+     * @param args args[0] -- port to connect server to.
+     */
+    public static void main(String[] args) {
         int port;
         try {
             if (args.length > 0) {

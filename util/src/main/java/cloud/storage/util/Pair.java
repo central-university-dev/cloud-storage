@@ -1,5 +1,11 @@
 package cloud.storage.util;
 
+/**
+ * Pair class that containing two variables of type F and S respectively.
+ *
+ * @param <F> type of first variable
+ * @param <S> type of second variable
+ */
 public class Pair<F, S> {
     private final F first;
     private final S second;

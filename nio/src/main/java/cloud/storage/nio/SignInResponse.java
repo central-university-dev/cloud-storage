@@ -1,7 +1,12 @@
-package cloud.storage.data;
+package cloud.storage.nio;
+
+import cloud.storage.data.Field;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Data type containing server response of SignIn command.
+ */
 public class SignInResponse implements Field {
     private enum Status {
         SUCCESS((byte) 1),
@@ -24,9 +29,9 @@ public class SignInResponse implements Field {
         }
     }
 
-    public final Status status;
-    public final UserData userData;
-    public final String message;
+    private final Status status;
+    private final UserData userData;
+    private final String message;
 
     private SignInResponse(Status status, UserData userData) {
         this(status, userData, null);
@@ -59,6 +64,14 @@ public class SignInResponse implements Field {
         return new SignInResponse(Status.FAILURE, message);
     }
 
+    public UserData getUserData() {
+        return userData;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     public static SignInResponse fromBytes(ByteBuffer byteBuffer) {
         Status status = Status.getStatus(byteBuffer.get());
         if (status == Status.SUCCESS) {
@@ -76,16 +89,16 @@ public class SignInResponse implements Field {
     }
 
     @Override
-    public int getLength() {
+    public int getByteLength() {
         if (status == Status.SUCCESS) {
-            return 1 + userData.getLength();
+            return 1 + userData.getByteLength();
         }
         return 1 + (message != null ? Integer.BYTES + message.length() : 0);
     }
 
     @Override
     public byte[] getBytes() {
-        byte[] bytes = new byte[getLength()];
+        byte[] bytes = new byte[getByteLength()];
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         byteBuffer.put(status.val);
         if (status == Status.SUCCESS) {

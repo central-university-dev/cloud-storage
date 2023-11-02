@@ -1,14 +1,20 @@
 package cloud.storage.client;
 
 import cloud.storage.data.Cmd;
-import cloud.storage.nio.CommandMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 import java.util.List;
 
-public class CommandParser extends ChannelOutboundHandlerAdapter {
+/**
+ * Parses user commands and sends it down the pipeline.
+ *
+ * @see CommandMessage
+ * @see ClientHandler
+ * @see ChannelCommandHandler
+ */
+class CommandParser extends ChannelOutboundHandlerAdapter {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         if (msg instanceof String message) {

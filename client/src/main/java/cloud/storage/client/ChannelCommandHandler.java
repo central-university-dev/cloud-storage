@@ -2,17 +2,27 @@ package cloud.storage.client;
 
 import cloud.storage.data.Cmd;
 import cloud.storage.nio.CommandHandler;
-import cloud.storage.nio.CommandMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 
 import java.util.Map;
 
-public class ChannelCommandHandler extends ChannelOutboundHandlerAdapter {
+/**
+ * Handles user commands and send the request on the server.
+ *
+ * @see ClientHandler
+ * @see CommandParser
+ */
+class ChannelCommandHandler extends ChannelOutboundHandlerAdapter {
+    /**
+     * Map of outbound command handlers instances
+     *
+     * @see CommandHandler
+     */
     private final Map<Cmd, ? extends CommandHandler> COMMAND_HANDLERS;
 
-    public ChannelCommandHandler(ClientHandler clientHandler) {
+    ChannelCommandHandler(ClientHandler clientHandler) {
         super();
 
         COMMAND_HANDLERS = Map.of(

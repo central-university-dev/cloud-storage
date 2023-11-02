@@ -4,6 +4,11 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.Arrays;
 
+/**
+ * Enum of all the existing commands.
+ *
+ * @see Payload
+ */
 public enum Cmd implements Field {
     PING((byte) 1),
     TIME((byte) 2),
@@ -19,7 +24,7 @@ public enum Cmd implements Field {
     }
 
     @Override
-    public int getLength() {
+    public int getByteLength() {
         return BYTE_LENGTH;
     }
 

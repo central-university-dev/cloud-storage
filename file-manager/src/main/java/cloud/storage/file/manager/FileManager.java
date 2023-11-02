@@ -1,5 +1,6 @@
 package cloud.storage.file.manager;
 
+import cloud.storage.nio.UserData;
 import cloud.storage.util.Pair;
 
 import java.net.SocketAddress;
@@ -7,6 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Class responsible for managing inner file system and giving access to users.
+ */
 public class FileManager {
     private final Map<String, String> users;
     private final Map<String, SocketAddress> sessionByUser = new HashMap<>();
@@ -44,9 +48,9 @@ public class FileManager {
         System.out.println("Session ended: " + address + "->" + login);
     }
 
-    public Pair<Boolean, String> signUp(SocketAddress address, cloud.storage.data.UserData userData) {
+    public Pair<Boolean, String> signUp(SocketAddress address, UserData userData) {
         if (userBySession.containsKey(address)) {
-            return new Pair<>(false, "There is active session with such address already.");
+            return new Pair<>(false, "There is an active session with such address already.");
         }
         if (users.containsKey(userData.getLogin())) {
             return new Pair<>(false, "User with such login is already registered.");
@@ -58,9 +62,9 @@ public class FileManager {
         return startSession(address, userData.getLogin());
     }
 
-    public Pair<Boolean, String> signIn(SocketAddress address, cloud.storage.data.UserData userData) {
+    public Pair<Boolean, String> signIn(SocketAddress address, UserData userData) {
         if (userBySession.containsKey(address)) {
-            return new Pair<>(false, "There is active session with such address already.");
+            return new Pair<>(false, "There is an active session with such address already.");
         }
         if (!users.containsKey(userData.getLogin())) {
             return new Pair<>(false, "There is no user with such login.");

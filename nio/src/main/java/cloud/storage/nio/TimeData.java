@@ -1,8 +1,13 @@
-package cloud.storage.data;
+package cloud.storage.nio;
+
+import cloud.storage.data.Field;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
 
+/**
+ * Data type containing server response for Time command.
+ */
 public class TimeData implements Field {
     private final long timestamp;
     private final Date date;
@@ -26,13 +31,13 @@ public class TimeData implements Field {
     }
 
     @Override
-    public int getLength() {
+    public int getByteLength() {
         return Long.BYTES;
     }
 
     @Override
     public byte[] getBytes() {
-        return ByteBuffer.allocate(getLength()).putLong(timestamp).array();
+        return ByteBuffer.allocate(getByteLength()).putLong(timestamp).array();
     }
 
     public static TimeData fromBytes(byte[] bytes) {

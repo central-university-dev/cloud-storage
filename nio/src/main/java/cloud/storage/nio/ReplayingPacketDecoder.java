@@ -6,6 +6,10 @@ import io.netty.handler.codec.ReplayingDecoder;
 
 import java.util.List;
 
+/**
+ * Default {@link ReplayingDecoder} responsible for collecting whole inbound {@link cloud.storage.data.Packet} bytes
+ * to pass {@link cloud.storage.data.Payload} data up the pipeline
+ */
 public class ReplayingPacketDecoder extends ReplayingDecoder<Void> {
 
     @Override

@@ -6,4 +6,6 @@ dependencies {
     implementation 'org.jetbrains:annotations:23.0.0'
     implementation project(path: ':util')
     implementation project(path: ':data')
+    implementation project(path: ':nio')
+    implementation project(path: ':nio')
 }

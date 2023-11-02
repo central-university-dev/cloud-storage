@@ -8,10 +8,20 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.util.Map;
 
-public class ChannelPayloadHandler extends ChannelInboundHandlerAdapter {
+/**
+ * Handles responses from the server.
+ *
+ * @see ClientHandler
+ */
+class ChannelPayloadHandler extends ChannelInboundHandlerAdapter {
+    /**
+     * Map of inbound payload handlers instances
+     *
+     * @see PayloadHandler
+     */
     private final Map<Cmd, ? extends PayloadHandler> PAYLOAD_HANDLERS;
 
-    public ChannelPayloadHandler(ClientHandler clientHandler) {
+    ChannelPayloadHandler(ClientHandler clientHandler) {
 
         PAYLOAD_HANDLERS = Map.of(
                 Cmd.PING, new PingHandler(),

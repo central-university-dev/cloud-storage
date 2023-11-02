@@ -2,6 +2,9 @@ package cloud.storage.data;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Data class containing information about command and inner data.
+ */
 public class Payload implements Field {
     public final Cmd cmd;
     public final byte[] cmdBody;
@@ -13,13 +16,13 @@ public class Payload implements Field {
     }
 
     @Override
-    public int getLength() {
-        return cmd.getLength() + (cmdBody != null ? cmdBody.length : 0);
+    public int getByteLength() {
+        return cmd.getByteLength() + (cmdBody != null ? cmdBody.length : 0);
     }
 
     @Override
     public byte[] getBytes() {
-        byte[] bytes = new byte[getLength()];
+        byte[] bytes = new byte[getByteLength()];
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         byteBuffer.put(cmd.getBytes());
         if (cmdBody != null) {

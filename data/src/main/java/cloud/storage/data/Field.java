@@ -1,6 +1,6 @@
 package cloud.storage.data;
 
 public interface Field {
-    int getLength();
+    int getByteLength();
     byte[] getBytes();
 }
