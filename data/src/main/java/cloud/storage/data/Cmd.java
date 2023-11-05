@@ -14,7 +14,8 @@ public enum Cmd implements Field {
     TIME((byte) 2),
     SIGN_UP((byte) 3),
     SIGN_IN((byte) 4),
-    SIGN_OUT((byte) 5);
+    SIGN_OUT((byte) 5),
+    UPLOAD((byte) 123);
 
     static private final int BYTE_LENGTH = 1;
     private final byte val;
