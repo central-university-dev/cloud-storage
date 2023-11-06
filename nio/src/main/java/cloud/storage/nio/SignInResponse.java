@@ -12,6 +12,8 @@ public class SignInResponse implements Field {
         SUCCESS((byte) 1),
         FAILURE((byte) 2);
 
+        static private final int BYTE_LENGTH = 1;
+
         private final byte val;
 
         Status(byte val) {
@@ -30,21 +32,11 @@ public class SignInResponse implements Field {
     }
 
     private final Status status;
-    private final UserData userData;
     private final String message;
 
-    private SignInResponse(Status status, UserData userData) {
-        this(status, userData, null);
-    }
-
-    private SignInResponse(Status status, String message) {
-        this(status, null, message);
-    }
-
-    private SignInResponse(Status status, UserData userData, String message) {
+    private SignInResponse(Status status, String userRoot) {
         this.status = status;
-        this.userData = userData;
-        this.message = message;
+        this.message = userRoot;
     }
 
 
@@ -56,16 +48,12 @@ public class SignInResponse implements Field {
         return status == Status.FAILURE;
     }
 
-    public static SignInResponse success(UserData userData) {
-        return new SignInResponse(Status.SUCCESS, userData);
+    public static SignInResponse success(String userRoot) {
+        return new SignInResponse(Status.SUCCESS, userRoot);
     }
 
     public static SignInResponse failure(String message) {
         return new SignInResponse(Status.FAILURE, message);
-    }
-
-    public UserData getUserData() {
-        return userData;
     }
 
     public String getMessage() {
@@ -74,26 +62,19 @@ public class SignInResponse implements Field {
 
     public static SignInResponse fromBytes(ByteBuffer byteBuffer) {
         Status status = Status.getStatus(byteBuffer.get());
+        int length = byteBuffer.getInt();
+        byte[] bytes = new byte[length];
+        byteBuffer.get(bytes);
+        String stringResponse = new String(bytes);
         if (status == Status.SUCCESS) {
-            UserData userData = UserData.fromBytes(byteBuffer);
-            return success(userData);
+            return success(stringResponse);
         }
-        String message = null;
-        if (byteBuffer.hasRemaining()) {
-            int messageLength = byteBuffer.getInt();
-            byte[] messageBytes = new byte[messageLength];
-            byteBuffer.get(messageBytes);
-            message = new String(messageBytes);
-        }
-        return failure(message);
+        return failure(stringResponse);
     }
 
     @Override
     public int getByteLength() {
-        if (status == Status.SUCCESS) {
-            return 1 + userData.getByteLength();
-        }
-        return 1 + (message != null ? Integer.BYTES + message.length() : 0);
+        return Status.BYTE_LENGTH + (message != null ? Integer.BYTES + message.length() : 0);
     }
 
     @Override
@@ -101,13 +82,7 @@ public class SignInResponse implements Field {
         byte[] bytes = new byte[getByteLength()];
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         byteBuffer.put(status.val);
-        if (status == Status.SUCCESS) {
-            byteBuffer.put(userData.getBytes());
-        } else {
-            if (message != null) {
-                byteBuffer.putInt(message.length()).put(message.getBytes());
-            }
-        }
+        byteBuffer.putInt(message.length()).put(message.getBytes());
         return bytes;
     }
 }

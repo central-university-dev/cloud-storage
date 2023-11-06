@@ -46,7 +46,7 @@ class SignOutHandler implements CommandHandler, PayloadHandler {
      */
     @Override
     public void handle(ChannelHandlerContext context, byte[] cmdBody) {
-        clientHandler.signOut();
+        clientHandler.resetWorkingDirectory();
         context.fireChannelRead("Signed out");
     }
 }

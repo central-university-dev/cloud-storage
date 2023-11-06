@@ -5,12 +5,11 @@ plugins {
 dependencies {
     implementation project(':data')
     implementation project(':util')
-    implementation project(':file-manager')
     implementation project(path: ':nio')
 }
 
 jar {
-    mustRunAfter(':data:jar', ':util:jar', ':file-manager:jar', ':nio:jar')
+    mustRunAfter(':data:jar', ':util:jar', ':nio:jar')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {

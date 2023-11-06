@@ -1,8 +1,9 @@
 package cloud.storage.server;
 
 import cloud.storage.data.Cmd;
+import cloud.storage.data.Packet;
 import cloud.storage.data.Payload;
-import cloud.storage.file.manager.FileManager;
+import cloud.storage.server.file.manager.FileManager;
 import cloud.storage.nio.PayloadHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -26,7 +27,8 @@ class RequestHandler extends SimpleChannelInboundHandler<Payload> {
                 Cmd.TIME, new TimePayloadHandler(),
                 Cmd.SIGN_UP, new SignUpHandler(fileManager),
                 Cmd.SIGN_IN, new SignInHandler(fileManager),
-                Cmd.SIGN_OUT, new SignOutHandler(fileManager)
+                Cmd.SIGN_OUT, new SignOutHandler(fileManager),
+                Cmd.UPLOAD, new UploadHandler(fileManager)
         );
     }
 
@@ -39,7 +41,9 @@ class RequestHandler extends SimpleChannelInboundHandler<Payload> {
     protected void channelRead0(ChannelHandlerContext ctx, Payload msg) {
         PayloadHandler requestHandler = REQUEST_HANDLER_INSTANCES.get(msg.cmd);
         if (requestHandler == null) {
-            throw new RuntimeException("Unknown cmd.");
+            System.err.println("Got unknown cmd: " + msg.cmd);
+            ctx.write(new Packet(new Payload(Cmd.PING, "The server can't handle this command.".getBytes())));
+            return;
         }
         requestHandler.handle(ctx, msg.cmdBody);
     }

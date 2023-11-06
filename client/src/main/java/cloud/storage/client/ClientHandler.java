@@ -9,19 +9,23 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Primary handler on client-side application.
  * Responsible for user interaction: receiving commands and returning messages.
+ *
  * @see CommandParser
  * @see ChannelCommandHandler
  * @see ChannelPayloadHandler
  */
 class ClientHandler extends ChannelInboundHandlerAdapter {
-    private ChannelHandlerContext ctx;
-    private BufferedReader reader;
-    private BufferedWriter writer;
-    private String user;
+    private final ExecutorService executorService;
+    private volatile ChannelHandlerContext ctx;
+    private volatile BufferedReader reader;
+    private volatile BufferedWriter writer;
+    private volatile String workingDirectory;
 
     /**
      * @param reader -- where to read user commands
@@ -32,12 +36,19 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
         super();
         this.reader = reader;
         this.writer = writer;
+        this.executorService = Executors.newFixedThreadPool(1);
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         this.ctx = ctx;
         startWorking();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        this.ctx = null;
+        shutdown();
     }
 
     private void startWorking() {
@@ -49,24 +60,25 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
      * Gets user command from passed reader and sends it down the pipeline.
      */
     private void sendCommand() {
-        print("<" + (user == null ? "" : user) + ">:");
+        executorService.submit(() -> {
+            print("<" + (workingDirectory == null ? "" : workingDirectory) + ">:");
 
-        String commandMessage = readLine();
-        if (commandMessage == null) {
-            shutdown();
-            return;
-        }
-        if (commandMessage.equals("exit")) {
-            shutdown();
-            return;
-        }
-        if (commandMessage.equals("help")) {
-            printHelp();
-            sendCommand();
-            return;
-        }
-        ChannelFuture future = ctx.writeAndFlush(commandMessage);
-        future.addListener(sendNextCommand);
+            String commandMessage = readLine();
+            if (commandMessage == null) {
+                shutdown();
+                return;
+            }
+            if (commandMessage.equals("exit")) {
+                shutdown();
+                return;
+            }
+            if (commandMessage.equals("help")) {
+                printHelp();
+                return;
+            }
+            ChannelFuture future = ctx.writeAndFlush(commandMessage);
+            future.addListener(sendNextCommand);
+        });
     }
 
     private void printHelp() {
@@ -95,9 +107,6 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
     private final ChannelFutureListener sendNextCommand = new ChannelFutureListener() {
         @Override
         public void operationComplete(ChannelFuture future) {
-            if (future.isSuccess()) {
-                return;
-            }
             if (future.isCancelled()) {
                 System.err.println("Command was cancelled");
             } else if (future.cause() != null) {
@@ -109,15 +118,18 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
 
     private void shutdown() {
         println("Shutting down");
-        ctx.channel().close();
+        if (ctx != null) {
+            ctx.channel().close();
+        }
+        executorService.shutdownNow();
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof String string) {
             println(string);
+            print("<" + (workingDirectory == null ? "" : workingDirectory) + ">:");
         }
-        sendCommand();
     }
 
     @Override
@@ -164,14 +176,14 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
      *
      * @param login - the user's login that used to authorize on the server
      */
-    protected void signIn(String login) {
-        this.user = login;
+    protected void setWorkingDirectory(String login) {
+        this.workingDirectory = login;
     }
 
     /**
      * Forgets the user's login from server side.
      */
-    protected void signOut() {
-        this.user = null;
+    protected void resetWorkingDirectory() {
+        this.workingDirectory = null;
     }
 }

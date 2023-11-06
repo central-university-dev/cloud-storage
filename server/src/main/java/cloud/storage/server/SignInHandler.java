@@ -3,7 +3,7 @@ package cloud.storage.server;
 import cloud.storage.data.Cmd;
 import cloud.storage.data.Packet;
 import cloud.storage.data.Payload;
-import cloud.storage.file.manager.FileManager;
+import cloud.storage.server.file.manager.FileManager;
 import cloud.storage.nio.PayloadHandler;
 import cloud.storage.nio.SignInResponse;
 import cloud.storage.nio.UserData;
@@ -41,7 +41,7 @@ public class SignInHandler implements PayloadHandler {
         UserData userData = UserData.fromBytes(ByteBuffer.wrap(cmdBody));
         Pair<Boolean, String> result = fileManager.signIn(context.channel().remoteAddress(), userData);
         if (result.getFirst()) {
-            context.writeAndFlush(getPacket(SignInResponse.success(userData).getBytes()));
+            context.writeAndFlush(getPacket(SignInResponse.success(result.getSecond()).getBytes()));
         } else {
             context.writeAndFlush(getPacket(SignInResponse.failure(result.getSecond()).getBytes()));
         }

@@ -5,13 +5,12 @@ plugins {
 dependencies {
     implementation 'org.jetbrains:annotations:23.0.0'
     implementation project(':data')
-    implementation project(':file-manager')
     implementation project(path: ':nio')
     implementation project(path: ':util')
 }
 
 jar {
-    mustRunAfter(':data:jar', ':util:jar', ':file-manager:jar', ':nio:jar')
+    mustRunAfter(':data:jar', ':util:jar', ':nio:jar')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     manifest {

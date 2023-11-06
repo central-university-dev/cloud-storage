@@ -28,7 +28,8 @@ class ChannelPayloadHandler extends ChannelInboundHandlerAdapter {
                 Cmd.TIME, new TimeHandler(),
                 Cmd.SIGN_UP, new SignUpHandler(),
                 Cmd.SIGN_IN, new SignInHandler(clientHandler),
-                Cmd.SIGN_OUT, new SignOutHandler(clientHandler)
+                Cmd.SIGN_OUT, new SignOutHandler(clientHandler),
+                Cmd.UPLOAD, new UploadHandler()
         );
     }
 
@@ -38,6 +39,7 @@ class ChannelPayloadHandler extends ChannelInboundHandlerAdapter {
             PayloadHandler payloadHandler = PAYLOAD_HANDLERS.get(payload.cmd);
             if (payloadHandler == null) {
                 System.err.println("Cant handle payload with cmd " + payload.cmd.name());
+                ctx.fireChannelRead("Failed to handle response from server");
                 return;
             }
             payloadHandler.handle(ctx, payload.cmdBody);

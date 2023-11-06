@@ -30,7 +30,8 @@ class ChannelCommandHandler extends ChannelOutboundHandlerAdapter {
                 Cmd.TIME, new TimeHandler(),
                 Cmd.SIGN_UP, new SignUpHandler(),
                 Cmd.SIGN_IN, new SignInHandler(clientHandler),
-                Cmd.SIGN_OUT, new SignOutHandler(clientHandler)
+                Cmd.SIGN_OUT, new SignOutHandler(clientHandler),
+                Cmd.UPLOAD, new UploadHandler()
         );
     }
 

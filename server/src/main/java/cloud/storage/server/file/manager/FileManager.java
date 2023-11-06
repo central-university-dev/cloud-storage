@@ -1,9 +1,14 @@
-package cloud.storage.file.manager;
+package cloud.storage.server.file.manager;
 
 import cloud.storage.nio.UserData;
 import cloud.storage.util.Pair;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.SocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -22,8 +27,13 @@ public class FileManager {
     private final Map<SocketAddress, Instant> addressPenalty = new HashMap<>();
     private final Map<SocketAddress, Integer> addressSignInAttempts = new HashMap<>();
 
+    private final File root;
+    private final Map<String, File> userRoot = new HashMap<>();
+    private final Map<String, Path> userWorkingDirectory = new HashMap<>();
 
-    public FileManager() {
+    public FileManager(Path root) {
+        this.root = new File(root.toAbsolutePath().normalize().toUri());
+        this.root.mkdirs();
         users = new HashMap<>();
     }
 
@@ -52,7 +62,9 @@ public class FileManager {
 
         System.out.println("Session started: " + address + "->" + login);
 
-        return new Pair<>(true, "The session began successfully.");
+        Path userRelativeWorkingDirectory = Path.of("/").resolve(
+                userRoot.get(login).toPath().relativize(userWorkingDirectory.get(login)));
+        return new Pair<>(true, login + " " + userRelativeWorkingDirectory);
     }
 
     private void endSession(SocketAddress address) {
@@ -76,6 +88,13 @@ public class FileManager {
         users.put(userData.getLogin(), userData.getPassword());
 
         System.out.println("User created: " + userData.getLogin() + " " + userData.getPassword());
+
+        File folder = userRoot.computeIfAbsent(userData.getLogin(), this::createUserFolder);
+        if (folder == null) {
+            users.remove(userData.getLogin());
+            System.out.println("User removed: " + userData.getLogin());
+            return new Pair<>(false, "Failed to create user folder");
+        }
 
         return startSession(address, userData.getLogin());
     }
@@ -105,5 +124,67 @@ public class FileManager {
 
     public void signOut(SocketAddress address) {
         endSession(address);
+    }
+
+    public Pair<Boolean, String> uploadFile(SocketAddress address, Path path, InputStream inputStream) {
+        String login = userBySession.get(address);
+        if (login == null) {
+            return new Pair<>(false, "Unknown session. Please sign up or sign in and try again.");
+        }
+        try {
+
+            Pair<Path, String> resolveResult = resolveUserPath(login, path);
+            if (resolveResult.getFirst() == null) {
+                return new Pair<>(false, resolveResult.getSecond());
+            }
+            Path filePath = resolveResult.getFirst();
+
+            new File(filePath.getParent().toUri()).mkdirs();
+            Files.copy(inputStream, filePath);
+            System.out.println("File " + filePath + " uploaded.");
+        } catch (IOException e) {
+            System.err.println("Error occurred while trying to write a file: " + e.getMessage());
+            e.printStackTrace();
+            return new Pair<>(false, "Error occurred while trying to write a file on server.");
+        }
+        return new Pair<>(true, null);
+    }
+
+    private File createUserFolder(String login) {
+        File file = new File(root, login);
+        try {
+            if (!getFilePath(file).startsWith(getFilePath(root))
+                    || !file.exists() && !file.mkdir()
+                    || !file.isDirectory()
+                    || !file.canWrite()
+                    || !file.canRead()) {
+                return null;
+            }
+        } catch (SecurityException e) {
+            return null;
+        }
+        userWorkingDirectory.put(login, file.toPath().toAbsolutePath().normalize());
+        return file;
+    }
+
+    private static Path getFilePath(File file) {
+        return file.toPath().toAbsolutePath().normalize();
+    }
+
+    private Pair<Path, String> resolveUserPath(String login, Path path) {
+        path = path.normalize();
+
+        // converting absolute path to relative by removing root
+        if (path.isAbsolute()) {
+            Path pathRoot = path.getRoot();
+            path = pathRoot.relativize(path);
+        }
+
+        Path filePath = userWorkingDirectory.get(login).resolve(path).normalize();
+        Path userRootPath = getFilePath(userRoot.get(login));
+        if (!filePath.startsWith(userRootPath) || filePath.equals(userRootPath)) {
+            return new Pair<>(null, "Invalid path passed. You have no access to files outside your folder.");
+        }
+        return new Pair<>(filePath, null);
     }
 }

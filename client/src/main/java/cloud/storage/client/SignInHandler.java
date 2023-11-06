@@ -3,10 +3,10 @@ package cloud.storage.client;
 import cloud.storage.data.Cmd;
 import cloud.storage.data.Packet;
 import cloud.storage.data.Payload;
-import cloud.storage.nio.SignInResponse;
-import cloud.storage.nio.UserData;
 import cloud.storage.nio.CommandHandler;
 import cloud.storage.nio.PayloadHandler;
+import cloud.storage.nio.SignInResponse;
+import cloud.storage.nio.UserData;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
@@ -56,7 +56,7 @@ class SignInHandler implements CommandHandler, PayloadHandler {
     public void handle(ChannelHandlerContext context, byte[] cmdBody) {
         SignInResponse signInResponse = SignInResponse.fromBytes(ByteBuffer.wrap(cmdBody));
         if (signInResponse.isSuccess()) {
-            clientHandler.signIn(signInResponse.getUserData().getLogin());
+            clientHandler.setWorkingDirectory(signInResponse.getMessage());
             context.fireChannelRead("Signed in successfully");
         } else {
             context.fireChannelRead(signInResponse.getMessage());
