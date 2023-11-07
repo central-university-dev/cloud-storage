@@ -1,9 +1,9 @@
 package cloud.storage.server;
 
-import cloud.storage.server.file.manager.FileManager;
 import cloud.storage.nio.PacketEncoder;
 import cloud.storage.nio.PayloadDecoder;
 import cloud.storage.nio.ReplayingPacketDecoder;
+import cloud.storage.server.file.manager.FileManager;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -13,6 +13,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.UnorderedThreadPoolEventExecutor;
 import org.jetbrains.annotations.NotNull;
@@ -50,12 +52,16 @@ public class Server {
         EventExecutorGroup businessGroup = new UnorderedThreadPoolEventExecutor(4);
         try {
             ServerBootstrap b = new ServerBootstrap();
+            // TODO:: make PacketEncoder MessageToByteEncoder<Payload> and change it in every handler
+            // TODO:: make all messages (e.g. errors) be Cmd.MESSAGE payloads
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(@NotNull SocketChannel ch) {
                             ChannelPipeline p = ch.pipeline();
+                            p.addLast("logger", new LoggingHandler(LogLevel.INFO));
+
                             p.addLast("ReplayingPacketDecoder", new ReplayingPacketDecoder());
                             p.addLast("PayloadDecoder", new PayloadDecoder());
 

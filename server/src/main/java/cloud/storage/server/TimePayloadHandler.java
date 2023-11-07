@@ -24,7 +24,7 @@ public class TimePayloadHandler implements PayloadHandler {
      * @param cmdBody data of the payload to handle.
      */
     @Override
-    public void handle(ChannelHandlerContext context, byte[] cmdBody) {
+    public void handle(ChannelHandlerContext context, Payload payload) {
         context.writeAndFlush(getPacket((new TimeData()).getBytes()));
     }
 }

@@ -3,8 +3,7 @@ package cloud.storage.client;
 import cloud.storage.data.Cmd;
 import cloud.storage.data.Packet;
 import cloud.storage.data.Payload;
-import cloud.storage.nio.CommandHandler;
-import cloud.storage.nio.PayloadHandler;
+import cloud.storage.nio.AbstractDuplexCommandPayloadHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
@@ -13,11 +12,16 @@ import java.util.List;
 /**
  * Client side handler of Ping commands
  */
-class PingHandler implements CommandHandler, PayloadHandler {
+class PingHandler extends AbstractDuplexCommandPayloadHandler {
     private static final Cmd CMD = Cmd.PING;
 
     private static Packet getPacket(byte[] cmdBody) {
         return new Packet(new Payload(CMD, cmdBody));
+    }
+
+    @Override
+    protected Cmd getCmd() {
+        return CMD;
     }
 
     /**
@@ -29,7 +33,7 @@ class PingHandler implements CommandHandler, PayloadHandler {
      */
     @Override
     public void execute(ChannelHandlerContext context, List<String> arguments, ChannelPromise promise) {
-        context.write(getPacket(String.join(" ", arguments).getBytes()), promise);
+        context.writeAndFlush(getPacket(String.join(" ", arguments).getBytes()), promise);
     }
 
     /**
@@ -39,7 +43,7 @@ class PingHandler implements CommandHandler, PayloadHandler {
      * @param cmdBody data of the payload to handle.
      */
     @Override
-    public void handle(ChannelHandlerContext context, byte[] cmdBody) {
+    public void handle0(ChannelHandlerContext context, byte[] cmdBody) {
         String message = cmdBody == null ? "" : new String(cmdBody);
         context.fireChannelRead("ping " + message);
     }

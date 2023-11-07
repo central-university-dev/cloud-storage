@@ -24,7 +24,7 @@ public class SignOutHandler implements PayloadHandler {
      * @param cmdBody data of the payload to handle.
      */
     @Override
-    public void handle(ChannelHandlerContext context, byte[] cmdBody) {
+    public void handle(ChannelHandlerContext context, Payload payload) {
         fileManager.signOut(context.channel().remoteAddress());
         context.writeAndFlush(new Packet(new Payload(Cmd.SIGN_OUT, null)));
     }

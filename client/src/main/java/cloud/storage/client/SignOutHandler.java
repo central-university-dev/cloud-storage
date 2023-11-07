@@ -3,8 +3,7 @@ package cloud.storage.client;
 import cloud.storage.data.Cmd;
 import cloud.storage.data.Packet;
 import cloud.storage.data.Payload;
-import cloud.storage.nio.CommandHandler;
-import cloud.storage.nio.PayloadHandler;
+import cloud.storage.nio.AbstractDuplexCommandPayloadHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
@@ -13,7 +12,7 @@ import java.util.List;
 /**
  * Client side handler of SignOut commands.
  */
-class SignOutHandler implements CommandHandler, PayloadHandler {
+class SignOutHandler extends AbstractDuplexCommandPayloadHandler {
     private static final Cmd CMD = Cmd.SIGN_OUT;
 
     private final ClientHandler clientHandler;
@@ -26,6 +25,11 @@ class SignOutHandler implements CommandHandler, PayloadHandler {
         return new Packet(new Payload(CMD, null));
     }
 
+    @Override
+    protected Cmd getCmd() {
+        return CMD;
+    }
+
     /**
      * Sends request to the server to sign out.
      *
@@ -35,7 +39,7 @@ class SignOutHandler implements CommandHandler, PayloadHandler {
      */
     @Override
     public void execute(ChannelHandlerContext context, List<String> arguments, ChannelPromise promise) {
-        context.write(getPacket(), promise);
+        context.writeAndFlush(getPacket(), promise);
     }
 
     /**
@@ -45,7 +49,7 @@ class SignOutHandler implements CommandHandler, PayloadHandler {
      * @param cmdBody data of the payload to handle.
      */
     @Override
-    public void handle(ChannelHandlerContext context, byte[] cmdBody) {
+    public void handle0(ChannelHandlerContext context, byte[] cmdBody) {
         clientHandler.resetWorkingDirectory();
         context.fireChannelRead("Signed out");
     }

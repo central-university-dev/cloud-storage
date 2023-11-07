@@ -4,6 +4,8 @@ import cloud.storage.nio.UserData;
 import cloud.storage.util.Pair;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketAddress;
@@ -132,7 +134,6 @@ public class FileManager {
             return new Pair<>(false, "Unknown session. Please sign up or sign in and try again.");
         }
         try {
-
             Pair<Path, String> resolveResult = resolveUserPath(login, path);
             if (resolveResult.getFirst() == null) {
                 return new Pair<>(false, resolveResult.getSecond());
@@ -145,9 +146,65 @@ public class FileManager {
         } catch (IOException e) {
             System.err.println("Error occurred while trying to write a file: " + e.getMessage());
             e.printStackTrace();
-            return new Pair<>(false, "Error occurred while trying to write a file on server.");
+            return new Pair<>(false, "Error occurred while trying to write a file in cloud .");
         }
         return new Pair<>(true, null);
+    }
+
+    public Pair<InputStream, String> downloadFile(SocketAddress address, Path path) {
+        String login = userBySession.get(address);
+        if (login == null) {
+            return new Pair<>(null, "Unknown session. Please sign up or sign in and try again.");
+        }
+        Pair<Path, String> resolveResult = resolveUserPath(login, path);
+        if (resolveResult.getFirst() == null) {
+            return new Pair<>(null, resolveResult.getSecond());
+        }
+        Path filePath = resolveResult.getFirst();
+
+        File file = new File(filePath.toUri());
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            return new Pair<>(fileInputStream, null);
+        } catch (FileNotFoundException ignored) {
+            return new Pair<>(null, "File not found. Please check the path and try again.");
+        }
+    }
+
+    public Pair<Boolean, String> moveFile(SocketAddress address, Path source, Path dest) {
+        String login = userBySession.get(address);
+        if (login == null) {
+            return new Pair<>(null, "Unknown session. Please sign up or sign in and try again.");
+        }
+        Pair<Path, String> resolveResult = resolveUserPath(login, source);
+        if (resolveResult.getFirst() == null) {
+            return new Pair<>(null, resolveResult.getSecond());
+        }
+        Path sourceResolved = resolveResult.getFirst();
+
+        resolveResult = resolveUserPath(login, dest);
+        if (resolveResult.getFirst() == null) {
+            return new Pair<>(null, resolveResult.getSecond());
+        }
+        Path destResolved = resolveResult.getFirst();
+
+        // TODO:: handle errors?
+
+        File sourceFile = new File(sourceResolved.toUri());
+        File destFile = new File(destResolved.toUri());
+
+
+        // TODO:: remove copy-paste
+        if (destResolved.getParent() != null) {
+            new File(destResolved.getParent().toUri()).mkdirs();
+        }
+
+        boolean success = sourceFile.renameTo(destFile);
+        if (!success) {
+            return new Pair<>(false, "Failed to move a file");
+        }
+        return new Pair<>(true, null);
+
     }
 
     private File createUserFolder(String login) {

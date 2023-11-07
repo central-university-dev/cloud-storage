@@ -3,8 +3,8 @@ package cloud.storage.server;
 import cloud.storage.data.Cmd;
 import cloud.storage.data.Packet;
 import cloud.storage.data.Payload;
-import cloud.storage.server.file.manager.FileManager;
 import cloud.storage.nio.PayloadHandler;
+import cloud.storage.server.file.manager.FileManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -28,7 +28,9 @@ class RequestHandler extends SimpleChannelInboundHandler<Payload> {
                 Cmd.SIGN_UP, new SignUpHandler(fileManager),
                 Cmd.SIGN_IN, new SignInHandler(fileManager),
                 Cmd.SIGN_OUT, new SignOutHandler(fileManager),
-                Cmd.UPLOAD, new UploadHandler(fileManager)
+                Cmd.UPLOAD, new UploadHandler(fileManager),
+                Cmd.DOWNLOAD, new DownloadHandler(fileManager),
+                Cmd.MOVE, new MoveHandler(fileManager)
         );
     }
 
@@ -45,7 +47,7 @@ class RequestHandler extends SimpleChannelInboundHandler<Payload> {
             ctx.write(new Packet(new Payload(Cmd.PING, "The server can't handle this command.".getBytes())));
             return;
         }
-        requestHandler.handle(ctx, msg.cmdBody);
+        requestHandler.handle(ctx, msg);
     }
 
     @Override

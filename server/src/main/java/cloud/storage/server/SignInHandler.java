@@ -37,8 +37,8 @@ public class SignInHandler implements PayloadHandler {
      * @param cmdBody data of the payload to handle.
      */
     @Override
-    public void handle(ChannelHandlerContext context, byte[] cmdBody) {
-        UserData userData = UserData.fromBytes(ByteBuffer.wrap(cmdBody));
+    public void handle(ChannelHandlerContext context, Payload payload) {
+        UserData userData = UserData.fromBytes(ByteBuffer.wrap(payload.cmdBody));
         Pair<Boolean, String> result = fileManager.signIn(context.channel().remoteAddress(), userData);
         if (result.getFirst()) {
             context.writeAndFlush(getPacket(SignInResponse.success(result.getSecond()).getBytes()));
