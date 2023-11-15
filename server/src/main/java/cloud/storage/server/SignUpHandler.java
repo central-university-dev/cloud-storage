@@ -3,10 +3,10 @@ package cloud.storage.server;
 import cloud.storage.data.Cmd;
 import cloud.storage.data.Packet;
 import cloud.storage.data.Payload;
-import cloud.storage.file.manager.FileManager;
 import cloud.storage.nio.PayloadHandler;
 import cloud.storage.nio.SignInResponse;
 import cloud.storage.nio.UserData;
+import cloud.storage.server.file.manager.FileManager;
 import cloud.storage.util.Pair;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,13 +31,16 @@ public class SignUpHandler implements PayloadHandler {
      * @param cmdBody data of the payload to handle.
      */
     @Override
-    public void handle(ChannelHandlerContext context, byte[] cmdBody) {
-        UserData userData = UserData.fromBytes(ByteBuffer.wrap(cmdBody));
+    public void handle(ChannelHandlerContext context, Payload payload) {
+        UserData userData = UserData.fromBytes(ByteBuffer.wrap(payload.cmdBody));
         Pair<Boolean, String> result = fileManager.signUp(context.channel().remoteAddress(), userData);
         if (result.getFirst()) {
-            context.writeAndFlush(new Packet(new Payload(Cmd.SIGN_IN, SignInResponse.success(userData).getBytes())));
+            context.writeAndFlush(new Packet(new Payload(Cmd.SIGN_UP,
+                    SignInResponse.success(result.getSecond()).getBytes())));
         } else {
-            context.writeAndFlush(new Packet(new Payload(Cmd.SIGN_UP, result.getSecond().getBytes())));
+            // TODO:: MESSAGE
+            context.writeAndFlush(new Packet(new Payload(Cmd.PING,
+                    result.getSecond().getBytes())));
         }
     }
 }

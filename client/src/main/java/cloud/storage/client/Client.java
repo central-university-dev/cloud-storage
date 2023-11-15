@@ -12,6 +12,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -28,6 +30,7 @@ import java.nio.charset.StandardCharsets;
  * Connects to server, gets the user commands, sends it to server and handles response.
  */
 public class Client {
+    static final String CLIENT_HANDLER_NAME = "userInteraction";
 
     /**
      * The general way for user to interact with the application.
@@ -58,22 +61,21 @@ public class Client {
             b.group(workerGroup);
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
+            // TODO:: make PacketEncoder MessageToByteEncoder<Payload> and change it in every handler
+            // TODO:: make all messages (e.g. errors) be Cmd.MESSAGE payloads
+            // TODO:: make String be encodable and decodable easily, remove all copy-paste with that
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) {
                     ChannelPipeline p = ch.pipeline();
+                    p.addLast("logger", new LoggingHandler(LogLevel.INFO));
+
                     p.addLast("ReplayingPacketDecoder", new ReplayingPacketDecoder());
                     p.addLast("PayloadDecoder", new PayloadDecoder());
 
                     p.addLast("PacketEncoder", new PacketEncoder());
 
-                    ClientHandler clientHandler = new ClientHandler(bufferedReader, bufferedWriter);
-                    p.addLast("inboundPacketHandler", new ChannelPayloadHandler(clientHandler));
-
-                    p.addLast("outboundCommandHandler", new ChannelCommandHandler(clientHandler));
-                    p.addLast("commandParser", new CommandParser());
-
-                    p.addLast("userInteraction", clientHandler);
+                    p.addLast(CLIENT_HANDLER_NAME, new ClientHandler(bufferedReader, bufferedWriter));
                 }
             });
 

@@ -23,7 +23,7 @@ public class PingPayloadHandler implements PayloadHandler {
      * @param cmdBody data of the payload to handle.
      */
     @Override
-    public void handle(ChannelHandlerContext context, byte[] cmdBody) {
-        context.writeAndFlush(getPacket(cmdBody));
+    public void handle(ChannelHandlerContext context, Payload payload) {
+        context.writeAndFlush(getPacket(payload.cmdBody));
     }
 }

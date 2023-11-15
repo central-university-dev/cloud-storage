@@ -1,5 +1,6 @@
 package cloud.storage.nio;
 
+import cloud.storage.data.Payload;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
@@ -15,5 +16,5 @@ public interface PayloadHandler {
      * @param context context which got the payload.
      * @param cmdBody data of the payload to handle.
      */
-    void handle(ChannelHandlerContext context, byte[] cmdBody);
+    void handle(ChannelHandlerContext context, Payload payload);
 }

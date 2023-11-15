@@ -10,11 +10,22 @@ import java.util.Arrays;
  * @see Payload
  */
 public enum Cmd implements Field {
+    MESSAGE((byte) 0),
+
     PING((byte) 1),
+
     TIME((byte) 2),
+
     SIGN_UP((byte) 3),
+
     SIGN_IN((byte) 4),
-    SIGN_OUT((byte) 5);
+
+    SIGN_OUT((byte) 5),
+
+    UPLOAD((byte) 6),
+
+    DOWNLOAD((byte) 7),
+    MOVE((byte) 8);
 
     static private final int BYTE_LENGTH = 1;
     private final byte val;
