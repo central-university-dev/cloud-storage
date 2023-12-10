@@ -43,7 +43,7 @@ help
 
 ## Demo
 
-https://disk.yandex.ru/i/aTFEaD4FJ37lvQ
+https://disk.yandex.ru/i/LincVY5XyLya6g
 
 ## Authors
 
