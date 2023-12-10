@@ -2,6 +2,7 @@ package cloud.storage.server.file.manager;
 
 import cloud.storage.nio.UserData;
 import cloud.storage.util.Pair;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +21,7 @@ import java.util.Objects;
 /**
  * Class responsible for managing inner file system and giving access to users.
  */
+@Slf4j
 public class FileManager {
     private final static Duration PENALTY = Duration.ofMinutes(5);
     private final static Integer SIGN_IN_ATTEMPTS_LIMIT = 3;
@@ -62,7 +64,7 @@ public class FileManager {
         userBySession.put(address, login);
         sessionByUser.put(login, address);
 
-        System.out.println("Session started: " + address + "->" + login);
+        log.info("Session started: " + address + "->" + login);
 
         Path userRelativeWorkingDirectory = Path.of("/").resolve(
                 userRoot.get(login).toPath().relativize(userWorkingDirectory.get(login)));
@@ -77,7 +79,7 @@ public class FileManager {
         userBySession.remove(address);
         sessionByUser.remove(login);
 
-        System.out.println("Session ended: " + address + "->" + login);
+        log.info("Session ended: " + address + "->" + login);
     }
 
     public Pair<Boolean, String> signUp(SocketAddress address, UserData userData) {
@@ -89,12 +91,12 @@ public class FileManager {
         }
         users.put(userData.getLogin(), userData.getPassword());
 
-        System.out.println("User created: " + userData.getLogin() + " " + userData.getPassword());
+        log.info("User created: " + userData.getLogin() + " " + userData.getPassword());
 
         File folder = userRoot.computeIfAbsent(userData.getLogin(), this::createUserFolder);
         if (folder == null) {
             users.remove(userData.getLogin());
-            System.out.println("User removed: " + userData.getLogin());
+            log.info("User removed: " + userData.getLogin());
             return new Pair<>(false, "Failed to create user folder");
         }
 
@@ -142,10 +144,9 @@ public class FileManager {
 
             new File(filePath.getParent().toUri()).mkdirs();
             Files.copy(inputStream, filePath);
-            System.out.println("File " + filePath + " uploaded.");
+            log.info("File " + filePath + " uploaded.");
         } catch (IOException e) {
-            System.err.println("Error occurred while trying to write a file: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error occurred while trying to write a file: ", e);
             return new Pair<>(false, "Error occurred while trying to write a file in cloud .");
         }
         return new Pair<>(true, null);

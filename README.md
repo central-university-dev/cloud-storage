@@ -26,6 +26,14 @@ signIn login password
 	Try to sign in on the server with passed login and password.
 signOut
 	Sign out from server.
+-----For signed in users-----
+upload pathFrom pathTo
+    Upload file from this computer by pathFrom to server by pathTo
+download pathFrom pathTo
+    Download file from server by pathFrom to this computer by pathTo
+move pathFrom pathTo
+    Move file in server from pathFrom to pathTo (also may be used to rename file)
+-----For signed in users-----
 exit
 	Shutdown client
 help

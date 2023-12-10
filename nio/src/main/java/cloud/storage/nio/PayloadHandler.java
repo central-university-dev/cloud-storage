@@ -14,7 +14,7 @@ public interface PayloadHandler {
      * Handles the inbound payload.
      *
      * @param context context which got the payload.
-     * @param cmdBody data of the payload to handle.
+     * @param payload payload to handle.
      */
     void handle(ChannelHandlerContext context, Payload payload);
 }

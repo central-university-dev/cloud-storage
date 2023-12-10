@@ -3,16 +3,15 @@ package cloud.storage.client;
 import cloud.storage.data.Cmd;
 import cloud.storage.nio.AbstractDuplexCommandPayloadHandler;
 import cloud.storage.util.Pair;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -21,16 +20,14 @@ import java.util.concurrent.Executors;
 /**
  * Primary handler on client-side application.
  * Responsible for user interaction: receiving commands and returning messages.
- *
- * @see ChannelCommandHandler
- * @see ChannelPayloadHandler
  */
+@Slf4j
 class ClientHandler extends ChannelInboundHandlerAdapter {
     final static String COMMAND_HANDLER_NAME = "commandHandler";
     private final Map<Cmd, AbstractDuplexCommandPayloadHandler> HANDLER_INSTANCES;
     private final ExecutorService executorService;
     private volatile ChannelHandlerContext ctx;
-    private volatile BufferedReader reader;
+    private final BufferedReader reader;
     private volatile BufferedWriter writer;
     private volatile String workingDirectory;
 
@@ -90,6 +87,7 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
             }
             if (input.equals("help")) {
                 printHelp();
+                sendCommand();
                 return;
             }
 
@@ -113,12 +111,16 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
         }
         Cmd cmd;
         try {
-            cmd = Cmd.getCmd(words.get(0));
+            cmd = getCmdOrThrow(words.get(0));
         } catch (RuntimeException ignored) {
             promise.setFailure(new IllegalArgumentException("Unknown command."));
             return null;
         }
         return new Pair<>(cmd, words.subList(1, words.size()));
+    }
+
+    private static Cmd getCmdOrThrow(String commandName) throws RuntimeException {
+        return Cmd.getCmd(commandName);
     }
 
     private void executeCommand(Cmd cmd, List<String> arguments, ChannelPromise promise) {
@@ -157,6 +159,14 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
         println("\tTry to sign in on the server with passed login and password.");
         println("signOut");
         println("\tSign out from server.");
+        println("-----For signed in users-----");
+        println("upload pathFrom pathTo");
+        println("\tUpload file from this computer by pathFrom to server by pathTo");
+        println("download pathFrom pathTo");
+        println("\tDownload file from server by pathFrom to this computer by pathTo");
+        println("move pathFrom pathTo");
+        println("\tMove file in server from pathFrom to pathTo (also may be used to rename file)");
+        println("-----For signed in users-----");
         println("exit");
         println("\tShutdown client");
         println("help");
@@ -166,18 +176,22 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
     /**
      * Responsible to continue working at the end of the previous command.
      */
-    private final ChannelFutureListener sendNextCommand = new ChannelFutureListener() {
-        @Override
-        public void operationComplete(ChannelFuture future) {
-            if (future.isCancelled()) {
-                System.err.println("Command was cancelled");
+    private final ChannelFutureListener sendNextCommand = future -> {
+        if (future.isCancelled()) {
+            log.error("Command was cancelled");
+            try {
                 future.channel().pipeline().remove(COMMAND_HANDLER_NAME);
-            } else if (future.cause() != null) {
-                System.err.println("Command ended with failure: " + future.cause().getMessage());
-                future.channel().pipeline().remove(COMMAND_HANDLER_NAME);
+            } catch (RuntimeException ignored) {
             }
-            sendCommand();
+        } else if (future.cause() != null) {
+            log.error("Command ended with failure: {}", future.cause().getMessage());
+            println("Enter \"help\" to get a list of available commands");
+            try {
+                future.channel().pipeline().remove(COMMAND_HANDLER_NAME);
+            } catch (RuntimeException ignored) {
+            }
         }
+        sendCommand();
     };
 
     private void shutdown() {
@@ -200,8 +214,7 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
                 return reader.readLine();
             }
         } catch (IOException e) {
-            System.err.println("Error occurred while trying to read new line: " + e);
-            System.err.println(Arrays.toString(e.getStackTrace()));
+            log.error("Error occurred while trying to read new line: ", e);
             shutdown();
             return null;
         }
@@ -217,8 +230,7 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
                 writer.flush();
             }
         } catch (IOException e) {
-            System.err.println("Error occurred while trying to print a message: " + e);
-            System.err.println(Arrays.toString(e.getStackTrace()));
+            log.error("Error occurred while trying to print a message: ", e);
             writer = null;
             shutdown();
         }

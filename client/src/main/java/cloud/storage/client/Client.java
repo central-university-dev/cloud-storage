@@ -12,8 +12,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -29,6 +28,7 @@ import java.nio.charset.StandardCharsets;
  * Client-side application to connect and work with server.
  * Connects to server, gets the user commands, sends it to server and handles response.
  */
+@Slf4j
 public class Client {
     static final String CLIENT_HANDLER_NAME = "userInteraction";
 
@@ -39,7 +39,8 @@ public class Client {
      */
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("You have to pass host and port as arguments.");
+            log.error("You have to pass host and port as arguments.");
+            return;
         }
         String host;
         int port;
@@ -47,7 +48,7 @@ public class Client {
             host = args[0];
             port = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            System.err.println("Port must be a number");
+            log.error("Port must be a number");
             return;
         }
         EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -57,37 +58,35 @@ public class Client {
              Writer writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8);
              BufferedWriter bufferedWriter = new BufferedWriter(writer)
         ) {
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup);
-            b.channel(NioSocketChannel.class);
-            b.option(ChannelOption.SO_KEEPALIVE, true);
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(workerGroup);
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
             // TODO:: make PacketEncoder MessageToByteEncoder<Payload> and change it in every handler
             // TODO:: make all messages (e.g. errors) be Cmd.MESSAGE payloads
             // TODO:: make String be encodable and decodable easily, remove all copy-paste with that
-            b.handler(new ChannelInitializer<SocketChannel>() {
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) {
-                    ChannelPipeline p = ch.pipeline();
-                    p.addLast("logger", new LoggingHandler(LogLevel.INFO));
+                    ChannelPipeline pipeline = ch.pipeline();
+                    pipeline.addLast("ReplayingPacketDecoder", new ReplayingPacketDecoder());
+                    pipeline.addLast("PayloadDecoder", new PayloadDecoder());
 
-                    p.addLast("ReplayingPacketDecoder", new ReplayingPacketDecoder());
-                    p.addLast("PayloadDecoder", new PayloadDecoder());
+                    pipeline.addLast("PacketEncoder", new PacketEncoder());
 
-                    p.addLast("PacketEncoder", new PacketEncoder());
-
-                    p.addLast(CLIENT_HANDLER_NAME, new ClientHandler(bufferedReader, bufferedWriter));
+                    pipeline.addLast(CLIENT_HANDLER_NAME, new ClientHandler(bufferedReader, bufferedWriter));
                 }
             });
 
-            ChannelFuture f = b.connect(host, port).sync();
+            ChannelFuture bootstrapConnectFuture = bootstrap.connect(host, port).sync();
 
-            f.channel().closeFuture().sync();
+            bootstrapConnectFuture.channel().closeFuture().sync();
         } catch (ConnectException e) {
-            System.err.println("Failed to connect to server: " + e.getMessage());
+            log.error("Failed to connect to server: ", e);
         } catch (IOException e) {
-            System.err.println("Error occurred with input/output stream: " + e.getMessage());
+            log.error("Error occurred with input/output stream: ", e);
         } catch (InterruptedException e) {
-            System.err.println("Main thread was interrupted: " + e.getMessage());
+            log.error("Main thread was interrupted: ", e);
         } finally {
             workerGroup.shutdownGracefully();
         }

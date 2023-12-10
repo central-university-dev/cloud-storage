@@ -8,6 +8,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Client side handler of Ping commands
@@ -44,7 +45,7 @@ class PingHandler extends AbstractDuplexCommandPayloadHandler {
      */
     @Override
     public void handle0(ChannelHandlerContext context, byte[] cmdBody) {
-        String message = cmdBody == null ? "" : new String(cmdBody);
+        String message = Optional.ofNullable(cmdBody).map(String::new).orElse("");
         context.fireChannelRead("ping " + message);
     }
 }
